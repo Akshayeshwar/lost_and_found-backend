@@ -1,4 +1,4 @@
-﻿const API_URL = "/api";
+﻿const API_URL = "https://lost-and-found-iv6k.onrender.com/api";
 
 function showSection(sectionId) {
 
