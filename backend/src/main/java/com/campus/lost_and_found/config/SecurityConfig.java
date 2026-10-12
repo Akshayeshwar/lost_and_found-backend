@@ -1,4 +1,4 @@
-package com.campus.lost_and_found.config;
+﻿package com.campus.lost_and_found.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -28,7 +28,7 @@ public class SecurityConfig {
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers(
                     "/",
-                    "/index.html",
+                    "/index.html", "/favicon.ico",
                     "/css/**",
                     "/js/**",
                     "/api/users/register",

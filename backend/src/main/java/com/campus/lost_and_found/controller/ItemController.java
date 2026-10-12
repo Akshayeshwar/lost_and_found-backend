@@ -1,9 +1,11 @@
-package com.campus.lost_and_found.controller;
+﻿package com.campus.lost_and_found.controller;
 
 import com.campus.lost_and_found.entity.Item;
 import com.campus.lost_and_found.entity.User;
 import com.campus.lost_and_found.repository.UserRepository;
 import com.campus.lost_and_found.service.ItemService;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -26,19 +28,20 @@ public class ItemController {
     }
 
     @PostMapping("/user/{userId}")
-    public Item addItemForUser(
+    public ResponseEntity<?> addItemForUser(
             @PathVariable Long userId,
             @RequestBody Item item) {
 
         User user = userRepository.findById(userId).orElse(null);
 
         if (user == null) {
-            return null;
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body("User ID " + userId + " does not exist. Please register first.");
         }
 
         item.setUser(user);
 
-        return itemService.addItem(item);
+        return ResponseEntity.ok(itemService.addItem(item));
     }
 
     @GetMapping

@@ -149,7 +149,7 @@ document.getElementById("itemForm").addEventListener("submit", async function(ev
             });
 
         if (!response.ok) {
-            throw new Error("Failed to report item");
+            throw new Error(await response.text());
         }
 
         const text = await response.text(); if (!text) { throw new Error("Empty response - user ID may not exist"); } const savedItem = JSON.parse(text);
@@ -266,4 +266,5 @@ document.getElementById("registerForm").addEventListener("submit", async functio
 }
 
 });
+
 
