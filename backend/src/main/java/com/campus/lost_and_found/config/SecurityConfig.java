@@ -1,4 +1,4 @@
-﻿package com.campus.lost_and_found.config;
+package com.campus.lost_and_found.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
