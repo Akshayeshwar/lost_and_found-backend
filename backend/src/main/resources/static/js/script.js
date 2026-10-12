@@ -264,3 +264,5 @@ document.getElementById("registerForm").addEventListener("submit", async functio
     document.getElementById("registerMessage").textContent =
         "Error: " + error.message;
 }
+
+});

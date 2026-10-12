@@ -260,10 +260,9 @@ document.getElementById("registerForm").addEventListener("submit", async functio
         }
 
     } catch (error) {
+    console.error("Registration error:", error);
+    document.getElementById("registerMessage").textContent =
+        "Error: " + error.message;
+}
 
-        console.error("Registration error:", error);
-
-        document.getElementById("registerMessage").textContent =
-            "Unable to connect to server.";
-    }
 });
