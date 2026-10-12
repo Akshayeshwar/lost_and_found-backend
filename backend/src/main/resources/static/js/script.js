@@ -152,7 +152,7 @@ document.getElementById("itemForm").addEventListener("submit", async function(ev
             throw new Error("Failed to report item");
         }
 
-        const savedItem = await response.json();
+        const text = await response.text(); if (!text) { throw new Error("Empty response - user ID may not exist"); } const savedItem = JSON.parse(text);
 
         document.getElementById("itemMessage").textContent =
             `Item "${savedItem.name}" reported successfully!`;
@@ -164,7 +164,7 @@ document.getElementById("itemForm").addEventListener("submit", async function(ev
         console.error("Error:", error);
 
         document.getElementById("itemMessage").textContent =
-            "Unable to report item.";
+            "Unable to report item: " + error.message;
     }
 });
 
@@ -266,3 +266,4 @@ document.getElementById("registerForm").addEventListener("submit", async functio
 }
 
 });
+
