@@ -1,0 +1,392 @@
+{
+  "info": {
+    "name": "Campus Lost and Found API - Session 12 Test Sequence",
+    "description": "Comprehensive Postman test collection covering authentication, validation, discovery, ownership, claims, and status workflows.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:8080/api", "type": "string" },
+    { "key": "ownerToken", "value": "", "type": "string" },
+    { "key": "claimantToken", "value": "", "type": "string" },
+    { "key": "createdItemId", "value": "", "type": "string" },
+    { "key": "claimId", "value": "", "type": "string" }
+  ],
+  "item": [
+    {
+      "name": "01. Health Check",
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/health"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status code is 200', () => pm.response.to.have.status(200));",
+              "pm.test('Service status is UP', () => pm.expect(pm.response.json().status).to.eql('UP'));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "02. Register User (Valid)",
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"name\": \"Alice Postman\",\n  \"email\": \"alice_pm_{{$timestamp}}@campus.edu\",\n  \"password\": \"Secret123!\"\n}"
+        },
+        "url": "{{baseUrl}}/users/register"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status code is 201 Created', () => pm.response.to.have.status(201));",
+              "const json = pm.response.json();",
+              "pm.collectionVariables.set('ownerToken', json.token);",
+              "pm.test('Password not leaked', () => pm.expect(json.user.password).to.be.undefined);"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "03. Register User (Invalid - Validation Error)",
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"name\": \"\",\n  \"email\": \"not-an-email\",\n  \"password\": \"123\"\n}"
+        },
+        "url": "{{baseUrl}}/users/register"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status code is 400 Bad Request', () => pm.response.to.have.status(400));",
+              "pm.test('Field errors returned', () => pm.expect(pm.response.json().fieldErrors).to.exist);"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "04. Login (Success)",
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"email\": \"alice@campus.edu\",\n  \"password\": \"Password123\"\n}"
+        },
+        "url": "{{baseUrl}}/users/login"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status code is 200 OK', () => pm.response.to.have.status(200));",
+              "pm.test('Token received', () => pm.expect(pm.response.json().token).to.be.a('string'));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "05. Login (Invalid Credentials)",
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"email\": \"alice@campus.edu\",\n  \"password\": \"WrongPassword\"\n}"
+        },
+        "url": "{{baseUrl}}/users/login"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status code is 401 Unauthorized', () => pm.response.to.have.status(401));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "06. Public Item Catalog (GET)",
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/items?page=0&size=5&paged=true"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status code is 200 OK', () => pm.response.to.have.status(200));",
+              "pm.test('Content is array', () => pm.expect(pm.response.json().content).to.be.an('array'));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "07. Empty State Search (GET)",
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/items?search=XYZ_NONEXISTENT_KEYWORD_9999&paged=true"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status code is 200 OK', () => pm.response.to.have.status(200));",
+              "pm.test('Empty results returned', () => pm.expect(pm.response.json().content.length).to.eql(0));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "08. Create Item Report (POST)",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" },
+          { "key": "Authorization", "value": "Bearer {{ownerToken}}" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"title\": \"Graphing Calculator TI-84\",\n  \"description\": \"Black Texas Instruments calculator in slide case.\",\n  \"category\": \"ELECTRONICS\",\n  \"type\": \"FOUND\",\n  \"location\": \"Math Building Hall B\",\n  \"reportDate\": \"2026-10-14\",\n  \"status\": \"OPEN\"\n}"
+        },
+        "url": "{{baseUrl}}/items"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status code is 201 Created', () => pm.response.to.have.status(201));",
+              "const json = pm.response.json();",
+              "pm.collectionVariables.set('createdItemId', json.id);",
+              "pm.test('Status is OPEN', () => pm.expect(json.status).to.eql('OPEN'));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "09. Create Item Unauthenticated (Should Fail)",
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"title\": \"Unauthenticated Item\",\n  \"description\": \"Missing bearer token.\",\n  \"category\": \"ELECTRONICS\",\n  \"type\": \"LOST\",\n  \"location\": \"Campus Quad\",\n  \"reportDate\": \"2026-10-14\"\n}"
+        },
+        "url": "{{baseUrl}}/items"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status code is 401 Unauthorized', () => pm.response.to.have.status(401));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "10. View My Reports (GET)",
+      "request": {
+        "method": "GET",
+        "header": [{ "key": "Authorization", "value": "Bearer {{ownerToken}}" }],
+        "url": "{{baseUrl}}/items/my"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status code is 200 OK', () => pm.response.to.have.status(200));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "11. Register Second User (Claimant)",
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"name\": \"Bob Claimant\",\n  \"email\": \"bob_pm_{{$timestamp}}@campus.edu\",\n  \"password\": \"Secret123!\"\n}"
+        },
+        "url": "{{baseUrl}}/users/register"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status code is 201 Created', () => pm.response.to.have.status(201));",
+              "pm.collectionVariables.set('claimantToken', pm.response.json().token);"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "12. Non-Owner Modifies Report (403 Forbidden)",
+      "request": {
+        "method": "PUT",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" },
+          { "key": "Authorization", "value": "Bearer {{claimantToken}}" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"title\": \"Hacked Calculator Title\"\n}"
+        },
+        "url": "{{baseUrl}}/items/{{createdItemId}}"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status code is 403 Forbidden', () => pm.response.to.have.status(403));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "13. Submit Claim on Found Item",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" },
+          { "key": "Authorization", "value": "Bearer {{claimantToken}}" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"claimantName\": \"Bob Claimant\",\n  \"claimantContact\": \"bob@campus.edu / 555-0199\",\n  \"message\": \"My name is written in pencil inside the battery cover.\"\n}"
+        },
+        "url": "{{baseUrl}}/items/{{createdItemId}}/claims"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status code is 201 Created', () => pm.response.to.have.status(201));",
+              "pm.collectionVariables.set('claimId', pm.response.json().id);"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "14. Owner Approves Claim",
+      "request": {
+        "method": "PUT",
+        "header": [{ "key": "Authorization", "value": "Bearer {{ownerToken}}" }],
+        "url": "{{baseUrl}}/items/{{createdItemId}}/claims/{{claimId}}/approve"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status code is 200 OK', () => pm.response.to.have.status(200));",
+              "pm.test('Claim is APPROVED', () => pm.expect(pm.response.json().status).to.eql('APPROVED'));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "15. Owner Marks Item as RETURNED",
+      "request": {
+        "method": "PUT",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" },
+          { "key": "Authorization", "value": "Bearer {{ownerToken}}" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"status\": \"RETURNED\"\n}"
+        },
+        "url": "{{baseUrl}}/items/{{createdItemId}}/status"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status code is 200 OK', () => pm.response.to.have.status(200));",
+              "pm.test('Item status is RETURNED', () => pm.expect(pm.response.json().status).to.eql('RETURNED'));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "16. Terminal State Protection (Reopening RETURNED Item Fails)",
+      "request": {
+        "method": "PUT",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" },
+          { "key": "Authorization", "value": "Bearer {{ownerToken}}" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"status\": \"OPEN\"\n}"
+        },
+        "url": "{{baseUrl}}/items/{{createdItemId}}/status"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status code is 400 Bad Request', () => pm.response.to.have.status(400));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "17. Non-Existent Item (404 Not Found)",
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/items/99999999"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status code is 404 Not Found', () => pm.response.to.have.status(404));"
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}

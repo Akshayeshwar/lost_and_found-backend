@@ -2,6 +2,7 @@ package com.campus.lost_and_found.entity;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.persistence.*;
+import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "users")
@@ -11,16 +12,21 @@ public class User {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(nullable = false, length = 100)
     private String name;
 
-    @Column(unique = true, nullable = false)
+    @Column(nullable = false, unique = true, length = 150)
     private String email;
 
     @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
-    @Column(nullable = false)
+    @Column(nullable = false, length = 255)
     private String password;
 
-    private String role;
+    @Column(nullable = false, length = 20)
+    private String role = "ROLE_STUDENT";
+
+    @Column(name = "created_at", nullable = false, updatable = false)
+    private LocalDateTime createdAt = LocalDateTime.now();
 
     public User() {
     }
@@ -29,7 +35,8 @@ public class User {
         this.name = name;
         this.email = email;
         this.password = password;
-        this.role = role;
+        this.role = (role != null && !role.isBlank()) ? role : "ROLE_STUDENT";
+        this.createdAt = LocalDateTime.now();
     }
 
     public Long getId() {
@@ -70,5 +77,13 @@ public class User {
 
     public void setRole(String role) {
         this.role = role;
+    }
+
+    public LocalDateTime getCreatedAt() {
+        return createdAt;
+    }
+
+    public void setCreatedAt(LocalDateTime createdAt) {
+        this.createdAt = createdAt;
     }
 }

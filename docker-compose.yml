@@ -1,0 +1,76 @@
+# ==============================================================================
+# Campus Lost & Found - Docker Compose Orchestration
+# ==============================================================================
+# Usage:
+#   Start all services:   docker compose up -d
+#   View logs:            docker compose logs -f
+#   Stop all services:    docker compose down
+#   Stop & remove data:   docker compose down -v
+# ==============================================================================
+
+version: '3.8'
+
+services:
+  # ----------------------------------------------------------------------------
+  # MySQL Database Service
+  # ----------------------------------------------------------------------------
+  mysql:
+    image: mysql:8.0
+    container_name: campus-mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD:-root}
+      MYSQL_DATABASE: campus_lost_and_found
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p$${MYSQL_ROOT_PASSWORD}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 25s
+    networks:
+      - campus-network
+
+  # ----------------------------------------------------------------------------
+  # Spring Boot Backend API Service
+  # ----------------------------------------------------------------------------
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: campus-backend
+    restart: unless-stopped
+    depends_on:
+      mysql:
+        condition: service_healthy
+    environment:
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-dev}
+      DB_URL: jdbc:mysql://mysql:3306/campus_lost_and_found?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+      DB_USERNAME: ${DB_USERNAME:-root}
+      DB_PASSWORD: ${DB_PASSWORD:-root}
+      JWT_SECRET: ${JWT_SECRET:-c2VjdXJlQ2FtcHVzTG9zdEFuZEZvdW5kSldUU2VjcmV0S2V5MjAyNkZvckFjYWRlbWljUHJvamVjdERlcGxveW1lbnQ=}
+      JWT_EXPIRATION_MS: ${JWT_EXPIRATION_MS:-86400000}
+      CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS:-http://localhost:5173,http://localhost:3000,http://127.0.0.1:5173}
+      PORT: 8080
+    ports:
+      - "8080:8080"
+    networks:
+      - campus-network
+
+# ------------------------------------------------------------------------------
+# Persistent Storage Volumes
+# ------------------------------------------------------------------------------
+volumes:
+  mysql_data:
+    name: campus_mysql_data
+
+# ------------------------------------------------------------------------------
+# Isolated Bridge Network
+# ------------------------------------------------------------------------------
+networks:
+  campus-network:
+    name: campus_lost_found_net
+    driver: bridge
