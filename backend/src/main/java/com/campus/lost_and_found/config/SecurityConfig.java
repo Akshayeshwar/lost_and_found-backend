@@ -89,26 +89,30 @@ public class SecurityConfig {
                     "/js/**",
                     "/api/health",
                     "/api/health/**",
+                    "/health",
+                    "/health/**",
                     "/actuator/**",
                     "/api/users/login",
                     "/api/users/register",
+                    "/users/login",
+                    "/users/register",
                     "/error"
                 ).permitAll()
                 // Explicitly Protected Endpoints (evaluated before generic permitAll)
-                .requestMatchers("/api/users/me").authenticated()
-                .requestMatchers("/api/items/my", "/api/items/me").authenticated()
-                .requestMatchers("/api/items/user/**").authenticated()
-                .requestMatchers(HttpMethod.POST, "/api/items/*/claims").permitAll()
-                .requestMatchers(HttpMethod.GET, "/api/items/*/claims").authenticated()
-                .requestMatchers(HttpMethod.PUT, "/api/items/*/claims/**").authenticated()
-                .requestMatchers(HttpMethod.PATCH, "/api/items/*/status").authenticated()
-                .requestMatchers(HttpMethod.PUT, "/api/items/*/status").authenticated()
-                .requestMatchers(HttpMethod.POST, "/api/items/**").authenticated()
-                .requestMatchers(HttpMethod.PUT, "/api/items/**").authenticated()
-                .requestMatchers(HttpMethod.PATCH, "/api/items/**").authenticated()
-                .requestMatchers(HttpMethod.DELETE, "/api/items/**").authenticated()
+                .requestMatchers("/api/users/me", "/users/me").authenticated()
+                .requestMatchers("/api/items/my", "/api/items/me", "/items/my", "/items/me").authenticated()
+                .requestMatchers("/api/items/user/**", "/items/user/**").authenticated()
+                .requestMatchers(HttpMethod.POST, "/api/items/*/claims", "/items/*/claims").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/items/*/claims", "/items/*/claims").authenticated()
+                .requestMatchers(HttpMethod.PUT, "/api/items/*/claims/**", "/items/*/claims/**").authenticated()
+                .requestMatchers(HttpMethod.PATCH, "/api/items/*/status", "/items/*/status").authenticated()
+                .requestMatchers(HttpMethod.PUT, "/api/items/*/status", "/items/*/status").authenticated()
+                .requestMatchers(HttpMethod.POST, "/api/items/**", "/items/**").authenticated()
+                .requestMatchers(HttpMethod.PUT, "/api/items/**", "/items/**").authenticated()
+                .requestMatchers(HttpMethod.PATCH, "/api/items/**", "/items/**").authenticated()
+                .requestMatchers(HttpMethod.DELETE, "/api/items/**", "/items/**").authenticated()
                 // Public Read Access for Browse & Search
-                .requestMatchers(HttpMethod.GET, "/api/items/**").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/items/**", "/items/**").permitAll()
                 .anyRequest().authenticated()
             );
         }

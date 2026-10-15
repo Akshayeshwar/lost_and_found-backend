@@ -28,7 +28,7 @@ public class HealthController {
      * Health check endpoint supporting both /api/health and /actuator/health
      * Returns 200 OK when database is connected, 503 SERVICE_UNAVAILABLE if DB is down.
      */
-    @GetMapping({"/api/health", "/actuator/health"})
+    @GetMapping({"/api/health", "/health", "/actuator/health"})
     public ResponseEntity<Map<String, Object>> getHealth() {
         Map<String, Object> health = new HashMap<>();
         health.put("status", "UP");

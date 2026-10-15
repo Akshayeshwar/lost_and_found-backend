@@ -51,7 +51,11 @@ apiClient.interceptors.response.use(
       } else if (status === 403) {
         message = data?.message || 'Access Denied: You do not have permission to perform this action.';
       } else if (status === 404) {
-        message = data?.message || 'The requested campus report or resource could not be found.';
+        if (typeof window !== 'undefined' && window.location.hostname.includes('vercel.app') && (!import.meta.env.VITE_API_BASE_URL || import.meta.env.VITE_API_BASE_URL === '/api')) {
+          message = 'Backend API not connected! Please add VITE_API_BASE_URL in Vercel Project Settings pointing to your Render backend URL (e.g. https://<your-render-app>.onrender.com/api) and redeploy.';
+        } else {
+          message = data?.message || 'The requested campus report or resource could not be found.';
+        }
       } else if (status === 409) {
         message = data?.message || 'A conflicting record already exists in the system.';
       } else if (status === 400) {
