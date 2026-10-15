@@ -1,0 +1,39 @@
+# ==============================================================================
+# Render Blueprint Specification
+# Campus Lost & Found Platform
+# Backend Web Service + Managed PostgreSQL Database
+# Docs: https://render.com/docs/blueprint-spec
+# ==============================================================================
+version: "1"
+
+services:
+  # Spring Boot Backend API Web Service
+  - type: web
+    name: lost-and-found-backend
+    runtime: docker
+    plan: free
+    region: oregon
+    healthCheckPath: /api/health
+    dockerfilePath: Dockerfile
+    dockerContext: .
+    envVars:
+      - key: SPRING_PROFILES_ACTIVE
+        value: prod
+      - key: CORS_ALLOWED_ORIGINS
+        value: https://lost-and-found-frontend-chi.vercel.app,https://lost-and-found-frontend-chi.vercel.app/,http://localhost:5173
+      - key: DATABASE_URL
+        fromDatabase:
+          name: lost-and-found-db
+          property: connectionString
+      - key: SPRING_JPA_HIBERNATE_DDL_AUTO
+        value: update
+      - key: JWT_SECRET
+        generateValue: true
+
+# Managed PostgreSQL Database on Render
+databases:
+  - name: lost-and-found-db
+    databaseName: campus_lost_and_found
+    user: campus_user
+    plan: free
+    region: oregon

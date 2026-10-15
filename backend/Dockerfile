@@ -4,13 +4,12 @@
 FROM maven:3.9-eclipse-temurin-21 AS build
 WORKDIR /app
 
-# Copy pom.xml and download dependencies layer first for build caching
-COPY pom.xml .
-COPY .mvn .mvn
-COPY mvnw .
+# Copy backend pom.xml, wrapper, and source
+COPY backend/pom.xml .
+COPY backend/.mvn .mvn
+COPY backend/mvnw .
+COPY backend/src ./src
 
-# Copy project source and package executable JAR
-COPY src ./src
 RUN mvn clean package -DskipTests
 
 # ==============================================================================
@@ -34,7 +33,7 @@ ENV SPRING_PROFILES_ACTIVE=prod
 ENV PORT=8080
 ENV JAVA_OPTS="-XX:+UseContainerSupport -XX:MaxRAMPercentage=75.0 -Djava.security.egd=file:/dev/./urandom"
 
-# Built-in container healthcheck probe
+# Health check
 HEALTHCHECK --interval=30s --timeout=5s --start-period=30s --retries=3 \
   CMD wget --no-verbose --tries=1 --spider http://localhost:${PORT}/api/health || exit 1
 
